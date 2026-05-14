@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>BRT PRO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════
+       DESKTOP SIDEBAR
+  ════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">BRT<span class="logo-pro">PRO</span></div>
+
+    <nav class="sidebar-nav">
+      <button class="snav-btn active" data-tab="dashboard"  onclick="switchTab('dashboard',this)">
+        <span class="snav-icon">◈</span><span class="snav-label">Dashboard</span>
+      </button>
+      <button class="snav-btn" data-tab="session"   onclick="switchTab('session',this)">
+        <span class="snav-icon">＋</span><span class="snav-label">New Session</span>
+      </button>
+      <button class="snav-btn" data-tab="live"      onclick="switchTab('live',this)">
+        <span class="snav-icon">⏱</span><span class="snav-label">Live Session</span>
+        <span class="snav-live-dot" id="snavLiveDot" style="display:none"></span>
+      </button>
+      <button class="snav-btn" data-tab="history"   onclick="switchTab('history',this)">
+        <span class="snav-icon">☰</span><span class="snav-label">History</span>
+      </button>
+      <button class="snav-btn" data-tab="insights"  onclick="switchTab('insights',this)">
+        <span class="snav-icon">◎</span><span class="snav-label">Insights</span>
+      </button>
+      <button class="snav-btn" data-tab="limits"    onclick="switchTab('limits',this)">
+        <span class="snav-icon">⊘</span><span class="snav-label">Limits</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="sidebar-ai-btn" onclick="toggleAI()">
+        <span>🤖</span><span>AI Assistant</span>
+      </button>
+      <div class="sidebar-date" id="sidebarDate"></div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════ -->
+  <div class="main-wrap" id="mainWrap">
+
+    <!-- Mobile top bar -->
+    <div class="mobile-topbar">
+      <div class="logo">BRT<span class="logo-pro">PRO</span></div>
+      <div class="mobile-topbar-right">
+        <div class="live-indicator" id="liveIndicator" style="display:none" onclick="switchTab('live',document.querySelector('[data-tab=live]'))">
+          <span class="live-dot"></span>LIVE
+        </div>
+        <button class="mobile-ai-btn" onclick="toggleAI()">🤖</button>
+        <div class="date-label" id="dateLabel"></div>
+      </div>
+    </div>
+
+    <!-- Mobile bottom nav -->
+    <nav class="mobile-nav">
+      <button class="mnav-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
+        <span class="mnav-icon">◈</span><span class="mnav-label">Dashboard</span>
+      </button>
+      <button class="mnav-btn" data-tab="session" onclick="switchTab('session',this)">
+        <span class="mnav-icon">＋</span><span class="mnav-label">Session</span>
+      </button>
+      <button class="mnav-btn" data-tab="live" onclick="switchTab('live',this)">
+        <span class="mnav-icon">⏱</span><span class="mnav-label">Live</span>
+        <span class="mnav-live-dot" id="mnavLiveDot" style="display:none"></span>
+      </button>
+      <button class="mnav-btn" data-tab="history" onclick="switchTab('history',this)">
+        <span class="mnav-icon">☰</span><span class="mnav-label">History</span>
+      </button>
+      <button class="mnav-btn" data-tab="insights" onclick="switchTab('insights',this)">
+        <span class="mnav-icon">◎</span><span class="mnav-label">Insights</span>
+      </button>
+      <button class="mnav-btn" data-tab="limits" onclick="switchTab('limits',this)">
+        <span class="mnav-icon">⊘</span><span class="mnav-label">Limits</span>
+      </button>
+    </nav>
+
+    <!-- Page content -->
+    <div class="content" id="content">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div id="tab-dashboard" class="tab-page active">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <h1 class="page-title">Dashboard</h1>
+            <div class="period-pills">
+              <button class="period-pill active" onclick="setPeriod('all',this)">All time</button>
+              <button class="period-pill" onclick="setPeriod('month',this)">Month</button>
+              <button class="period-pill" onclick="setPeriod('week',this)">Week</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bankroll-hero">
+          <div class="hero-pl-col">
+            <div class="hero-label">Total P / L</div>
+            <div class="hero-amount zero" id="heroAmount">+$0.00</div>
+          </div>
+          <div class="hero-meta">
+            <div class="hero-meta-item"><strong id="heroSessions">0</strong><span>Sessions</span></div>
+            <div class="hero-meta-item"><strong id="heroAvg">—</strong><span>Avg / session</span></div>
+            <div class="hero-meta-item"><strong id="heroStreak">—</strong><span>Streak</span></div>
+            <div class="hero-meta-item"><strong id="heroWinRate">—</strong><span>Win rate</span></div>
+          </div>
+        </div>
+
+        <div id="warnBanner" class="warn-banner" style="display:none"></div>
+        <div id="tipBanner"  class="tip-banner"  style="display:none"></div>
+
+        <!-- AI insight strip (dashboard only) -->
+        <div id="dashAIStrip" class="dash-ai-strip" style="display:none">
+          <div class="dash-ai-icon">🤖</div>
+          <div class="dash-ai-text" id="dashAIText">Loading insight…</div>
+          <button class="dash-ai-ask" onclick="toggleAI()">Ask more →</button>
+        </div>
+
+        <div id="bankrollHealth" class="bankroll-health" style="display:none">
+          <div class="bh-top"><span class="bh-label">Bankroll Health</span><span id="bhPct" class="bh-pct">100%</span></div>
+          <div class="bh-track"><div id="bhBar" class="bh-fill" style="width:100%"></div></div>
+          <div class="bh-sub"><span id="bhCurrent">$0</span> remaining of <span id="bhTotal">$0</span></div>
+        </div>
+
+        <div id="limitStatus" class="limit-status-row" style="display:none"></div>
+
+        <div class="stats-grid">
+          <div class="stat-card win"><div class="s-label">Best Win</div><div class="s-val" id="sBestWin">—</div></div>
+          <div class="stat-card loss"><div class="s-label">Worst Loss</div><div class="s-val" id="sWorstLoss">—</div></div>
+          <div class="stat-card neutral"><div class="s-label">Wins</div><div class="s-val" id="sWins">0</div></div>
+          <div class="stat-card neutral"><div class="s-label">Losses</div><div class="s-val" id="sLosses">0</div></div>
+        </div>
+
+        <div id="disciplineCard" class="discipline-card" style="display:none">
+          <div class="disc-title">Session Discipline</div>
+          <div class="disc-row">
+            <div class="disc-item"><div class="disc-badge target">🎯</div><div class="disc-val" id="discTarget">0</div><div class="disc-lbl">Hit target</div></div>
+            <div class="disc-item"><div class="disc-badge ok">✅</div><div class="disc-val" id="discOk">0</div><div class="disc-lbl">Within limits</div></div>
+            <div class="disc-item"><div class="disc-badge breach">⚠️</div><div class="disc-val" id="discBreach">0</div><div class="disc-lbl">Exceeded</div></div>
+            <div class="disc-item"><div class="disc-badge rate">%</div><div class="disc-val" id="discRate">—</div><div class="disc-lbl">Discipline</div></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Bankroll over time</span>
+            <div class="tab-group">
+              <button class="tab-btn active" onclick="switchChart('line',this)">Line</button>
+              <button class="tab-btn" onclick="switchChart('bar',this)">Bar</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="bankrollChart"></canvas>
+            <div class="chart-placeholder"><div class="cph-icon">📈</div><div>Add sessions to see your chart</div></div>
+          </div>
+          <div class="streak-bar" id="streakBar"></div>
+        </div>
+      </div><!-- /dashboard -->
+
+      <!-- ══ SESSION (no limits section) ══ -->
+      <div id="tab-session" class="tab-page">
+        <div class="page-header"><h1 class="page-title" id="sessionPageTitle">New Session</h1></div>
+
+        <div id="autofillBanner" class="autofill-banner" style="display:none">
+          <span id="autofillText"></span>
+          <button onclick="applyAutofill()" class="autofill-btn">Use it</button>
+          <button onclick="dismissAutofill()" class="autofill-dismiss">✕</button>
+        </div>
+
+        <div class="form-card">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="sessType">Type</label>
+              <select id="sessType" onchange="handleTypeSelect()">
+                <option value="Casino">🎰  Casino</option>
+                <option value="Sportsbook">🏆  Sportsbook</option>
+                <option value="Poker">🃏  Poker</option>
+                <option value="Online">💻  Online</option>
+                <option disabled>──────────</option>
+                <option value="__new__">＋ New type…</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="venue">Venue / Book</label>
+              <input id="venue" type="text" placeholder="e.g. MGM, DraftKings">
+            </div>
+          </div>
+          <div id="customTypeRow" class="custom-type-row" style="display:none">
+            <input id="customTypeName" type="text" placeholder="Name your new type" maxlength="32" onkeydown="if(event.key==='Enter') confirmNewType()">
+            <button class="btn-confirm-type" onclick="confirmNewType()">Add</button>
+            <button class="btn-cancel-type" onclick="cancelNewType()">Cancel</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="start">Starting Balance</label>
+              <div class="affix-wrap"><span class="affix-left">$</span><input id="start" type="number" placeholder="0.00" step="0.01"></div>
+            </div>
+            <div class="form-group">
+              <label for="end">Ending Balance</label>
+              <div class="affix-wrap"><span class="affix-left">$</span><input id="end" type="number" placeholder="0.00" step="0.01"></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="sessDate">Date &amp; Time <span class="opt">(now)</span></label>
+              <input id="sessDate" type="datetime-local">
+            </div>
+            <div class="form-group">
+              <label for="duration">Duration <span class="opt">(min)</span></label>
+              <div class="affix-wrap"><input id="duration" type="number" placeholder="0" min="0" step="1"><span class="affix-right">min</span></div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="notes">Notes <span class="opt">(optional)</span></label>
+            <input id="notes" type="text" placeholder="e.g. blackjack, big hand at 11pm">
+          </div>
+        </div>
+
+        <button class="btn-add" id="btnAddSession" onclick="addSession()">+ Add Session</button>
+        <button class="btn-cancel-edit" id="btnCancelEdit" onclick="cancelEdit()">Cancel Edit</button>
+      </div><!-- /session -->
+
+      <!-- ══ LIVE SESSION ══ -->
+      <div id="tab-live" class="tab-page">
+
+        <!-- IDLE STATE -->
+        <div id="liveIdle">
+          <div class="page-header"><h1 class="page-title">Live Session</h1></div>
+          <div class="live-setup-card">
+            <div class="live-setup-header">
+              <div class="live-setup-icon">🎰</div>
+              <div>
+                <div class="live-setup-title">Start a live session</div>
+                <div class="live-setup-sub">Clock starts immediately. Enter your stack any time to track P&amp;L.</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="liveType">Type</label>
+                <select id="liveType"></select>
+              </div>
+              <div class="form-group">
+                <label for="liveVenue">Venue / Book</label>
+                <input id="liveVenue" type="text" placeholder="e.g. MGM, FanDuel">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="liveBuyIn">Buy-In <span id="liveBuyInHint" class="opt"></span></label>
+                <div class="affix-wrap"><span class="affix-left">$</span><input id="liveBuyIn" type="number" placeholder="0.00" step="0.01"></div>
+              </div>
+              <div class="form-group">
+                <label for="liveLossLimit">Stop-Loss <span class="opt">(optional)</span></label>
+                <div class="affix-wrap"><span class="affix-left">$</span><input id="liveLossLimit" type="number" placeholder="from limits" step="0.01"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="liveCashTarget">Cash-Out Target <span class="opt">(optional)</span></label>
+              <div class="affix-wrap"><span class="affix-left">$</span><input id="liveCashTarget" type="number" placeholder="from limits" step="0.01"></div>
+            </div>
+          </div>
+          <button class="btn-live-start" onclick="startLive()">▶ Start Session</button>
+        </div>
+
+        <!-- ACTIVE STATE -->
+        <div id="liveActive" style="display:none">
+          <div class="live-active-header">
+            <div class="live-active-info">
+              <div class="live-active-type" id="liveActiveType">Casino</div>
+              <div class="live-active-venue" id="liveActiveVenue"></div>
+            </div>
+            <div class="live-active-clock" id="liveClock">00:00:00</div>
+          </div>
+
+          <!-- Main P&L display -->
+          <div class="live-pl-hero">
+            <div class="live-pl-hero-label">CURRENT P / L</div>
+            <div class="live-pl-hero-value" id="livePLHero">—</div>
+            <div class="live-pl-hero-sub" id="livePLSub">Enter your stack below to track</div>
+          </div>
+
+          <!-- Stack entry -->
+          <div class="live-stack-entry">
+            <div class="live-stack-label">YOUR CURRENT STACK</div>
+            <div class="live-stack-row">
+              <div class="affix-wrap" style="flex:1">
+                <span class="affix-left live-dollar">$</span>
+                <input id="liveCurrentStack" type="number" step="0.01" placeholder="0.00" class="live-stack-input" oninput="updateLivePL()" inputmode="decimal">
+              </div>
+              <div class="live-stack-meta" id="liveStackMeta"></div>
+            </div>
+          </div>
+
+          <!-- Limit progress bars (only if limits set) -->
+          <div id="liveLimitBars" class="live-limit-bars" style="display:none">
+            <div id="liveLossBar" class="live-limit-bar">
+              <div class="live-limit-bar-top">
+                <span class="live-limit-bar-label">Stop-Loss</span>
+                <span class="live-limit-bar-val" id="liveLossBarVal">$0 / $0</span>
+              </div>
+              <div class="live-limit-track"><div class="live-limit-fill loss-fill" id="liveLossFill" style="width:0%"></div></div>
+            </div>
+            <div id="liveTargetBar" class="live-limit-bar">
+              <div class="live-limit-bar-top">
+                <span class="live-limit-bar-label">Cash-Out Target</span>
+                <span class="live-limit-bar-val" id="liveTargetBarVal">$0 / $0</span>
+              </div>
+              <div class="live-limit-track"><div class="live-limit-fill target-fill" id="liveTargetFill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- AI coaching strip -->
+          <div id="liveAIStrip" class="live-ai-strip" style="display:none">
+            <div class="live-ai-icon">🤖</div>
+            <div class="live-ai-text" id="liveAIText">Analyzing…</div>
+            <button class="live-ai-btn" onclick="toggleAI()">Chat →</button>
+          </div>
+
+          <!-- Alerts -->
+          <div id="liveAlerts" class="live-alerts"></div>
+
+          <!-- Notes -->
+          <div class="form-card" style="margin-top:0">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="liveNotes">Notes <span class="opt">(optional)</span></label>
+              <input id="liveNotes" type="text" placeholder="Notable hands, big moments…">
+            </div>
+          </div>
+
+          <div class="live-btn-row">
+            <button class="btn-live-end" onclick="endLive()">■ End &amp; Save</button>
+            <button class="btn-live-cancel" onclick="cancelLive()">Abandon</button>
+          </div>
+        </div>
+      </div><!-- /live -->
+
+      <!-- ══ HISTORY ══ -->
+      <div id="tab-history" class="tab-page">
+        <div class="history-controls">
+          <div class="history-top-row">
+            <div class="section-label" style="margin:0">Session History</div>
+            <div class="history-actions">
+              <button class="btn-icon-sm" onclick="toggleSelectAll()" id="selectAllBtn">Select all</button>
+              <button class="btn-icon-sm" onclick="downloadHistory('csv')">⬇ CSV</button>
+              <button class="btn-icon-sm" onclick="downloadHistory('json')">⬇ JSON</button>
+              <select id="sortSelect" class="sort-select" onchange="setSortMode(this.value)">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="profit_desc">Biggest win</option>
+                <option value="profit_asc">Biggest loss</option>
+                <option value="duration_desc">Longest</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-bar" id="filterBar"></div>
+        </div>
+
+        <div id="sessionList"></div>
+        <div id="paginationBar"></div>
+
+        <!-- Floating multi-select toolbar -->
+        <div class="floating-select-bar" id="floatingSelectBar" style="display:none">
+          <span class="floating-count" id="floatingCount">0 selected</span>
+          <button class="btn-floating-deselect" onclick="clearMultiSelect()">Deselect all</button>
+          <button class="btn-floating-del" onclick="deleteSelectedSessions()">🗑 Delete</button>
+        </div>
+      </div><!-- /history -->
+
+      <!-- ══ INSIGHTS ══ -->
+      <div id="tab-insights" class="tab-page">
+        <div class="page-header"><h1 class="page-title">Insights</h1></div>
+        <div id="insightCards" class="insight-cards"></div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Monthly P/L</span></div>
+          <div class="chart-wrap" style="height:160px"><canvas id="monthlyChart"></canvas><div class="chart-placeholder"><div class="cph-icon">📅</div><div>Add sessions to see monthly breakdown</div></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">P/L by Type</span></div>
+          <div class="chart-wrap" style="height:150px"><canvas id="typeChart"></canvas><div class="chart-placeholder"><div class="cph-icon">🏷️</div><div>Add sessions to see type breakdown</div></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Avg P/L by Day of Week</span></div>
+          <div class="chart-wrap" style="height:140px"><canvas id="dowChart"></canvas><div class="chart-placeholder"><div class="cph-icon">📆</div><div>Add sessions to see day breakdown</div></div></div>
+        </div>
+        <div id="venuesSection" style="display:none">
+          <div class="section-label">Top Venues / Books</div>
+          <div id="venuesList" class="venues-list"></div>
+        </div>
+      </div><!-- /insights -->
+
+      <!-- ══ LIMITS ══ -->
+      <div id="tab-limits" class="tab-page">
+        <div class="page-header"><h1 class="page-title">Bankroll &amp; Limits</h1></div>
+        <div class="limits-group-label">Your Bankroll</div>
+        <div class="form-card">
+          <div class="form-group" style="margin-bottom:4px">
+            <label for="limBankroll">Total Bankroll</label>
+            <div class="affix-wrap"><span class="affix-left">$</span><input id="limBankroll" type="number" placeholder="e.g. 5000" min="0" step="0.01"></div>
+          </div>
+          <div class="field-desc">Your total gambling budget. Drives the health bar on the dashboard.</div>
+        </div>
+        <div class="limits-group-label">Loss Limits</div>
+        <div class="form-card">
+          <div class="form-row">
+            <div class="form-group"><label for="limDaily">Daily</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limDaily" type="number" placeholder="—" min="0" step="0.01"></div></div>
+            <div class="form-group"><label for="limWeekly">Weekly</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limWeekly" type="number" placeholder="—" min="0" step="0.01"></div></div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group"><label for="limMonthly">Monthly</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limMonthly" type="number" placeholder="—" min="0" step="0.01"></div></div>
+            <div class="form-group"><label for="limSession">Default Live Stop-Loss</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limSession" type="number" placeholder="—" min="0" step="0.01"></div></div>
+          </div>
+        </div>
+        <div class="limits-group-label">Profit Targets</div>
+        <div class="form-card">
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group"><label for="limSessTarget">Default Live Cash-Out Target</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limSessTarget" type="number" placeholder="—" min="0" step="0.01"></div></div>
+            <div class="form-group"><label for="limMonthTarget">Monthly Profit Goal</label><div class="affix-wrap"><span class="affix-left">$</span><input id="limMonthTarget" type="number" placeholder="—" min="0" step="0.01"></div></div>
+          </div>
+        </div>
+        <button class="btn-save-limits" onclick="saveLimits()">Save Settings</button>
+        <div id="limitsSaved" class="limits-saved" style="display:none">✓ Settings saved</div>
+        <div id="periodStatus" class="period-status-section"></div>
+      </div><!-- /limits -->
+
+    </div><!-- /content -->
+  </div><!-- /main-wrap -->
+
+  <!-- ════════════════════════════════════════════
+       FLOATING AI PANEL
+  ════════════════════════════════════════════ -->
+  <div id="aiPanel" class="ai-panel" style="display:none">
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">🤖 AI Assistant</div>
+      <button class="ai-panel-close" onclick="toggleAI()">✕</button>
+    </div>
+
+    <div class="ai-quick-chips" id="aiQuickChips">
+      <button class="ai-chip" onclick="sendQuickPrompt('Analyze my overall performance and give me honest feedback.')">📊 Analyze</button>
+      <button class="ai-chip" onclick="sendQuickPrompt('What patterns do you see in my losing sessions?')">📉 Losing patterns</button>
+      <button class="ai-chip" onclick="sendQuickPrompt('Am I gambling responsibly? Be honest.')">🛡️ Check habits</button>
+      <button class="ai-chip" onclick="sendQuickPrompt('What bankroll management strategy would you recommend?')">💡 Strategy</button>
+      <button class="ai-chip" onclick="sendQuickPrompt('Debrief my most recent session.')">🔍 Last session</button>
+      <button class="ai-chip" onclick="sendQuickPrompt('When should I walk away based on my tendencies?')">🚪 When to stop</button>
+    </div>
+
+    <div class="ai-chat-area" id="aiChatArea">
+      <div class="ai-chat-welcome">
+        <strong>Hey — I'm your assistant.</strong><br>
+        I know your full session history. Ask me anything.
+      </div>
+    </div>
+
+    <div class="ai-input-row">
+      <input id="aiChatInput" class="ai-input" type="text" placeholder="Ask anything…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendAIChat();event.preventDefault();}">
+      <button class="ai-send-btn" onclick="sendAIChat()">↑</button>
+    </div>
+  </div>
+  <div class="ai-panel-backdrop" id="aiPanelBackdrop" style="display:none" onclick="toggleAI()"></div>
+
+  <!-- Timestamp Modal -->
+  <div id="timestampModal" class="modal" style="display:none">
+    <div class="modal-backdrop" onclick="closeTimestampModal()"></div>
+    <div class="modal-box">
+      <div class="modal-title">Edit Timestamp</div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Date &amp; Time</label>
+        <input id="modalTimestamp" type="datetime-local" style="width:100%;margin-top:6px">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeTimestampModal()">Cancel</button>
+        <button class="btn-modal-save" onclick="saveTimestamp()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
